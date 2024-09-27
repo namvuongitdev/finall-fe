@@ -1,0 +1,14 @@
+.icon {
+    font-size: 20px;
+    /* Kích thước biểu tượng */
+    cursor: pointer;
+    /* Hiển thị con trỏ như clickable */
+    color: #698dff;
+    transition: color 0.3s, transform 0.3s;
+    /* Hiệu ứng chuyển màu và phóng to */
+}
+
+.icon:hover {
+    transform: scale(1.1);
+    /* Phóng to khi hover */
+}
