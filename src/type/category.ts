@@ -15,7 +15,8 @@ export interface CategoryRequest extends BaseProps {
     categoryName?: string,
     description?: string,
     image: string,
-    file?: any
+    file?: any,
+    removeImage?: boolean;
 }
 
 export interface CateforyFilter {

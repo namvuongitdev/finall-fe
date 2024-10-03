@@ -14,6 +14,8 @@ import { createFormData } from "@/api/formdata";
 import ProductAdd from "./ProductAdd.vue";
 import { useI18n } from 'vue-i18n';
 import eventBus from '@/eventbus/eventBus';
+import axiosInstance from "@/axios/axiosConfig";
+import { AxiosError } from "axios";
 
 const { t } = useI18n();
 
@@ -66,7 +68,7 @@ const handleFindProduct = async (
       Object.assign(productResponse, response);
     })
     .catch((error) => {
-      customMessage('error' ,error.response.message)
+      console.log(error);
     });
 };
 
@@ -108,7 +110,9 @@ const handleDeleteProduct = (id: number) => {
     t('messageTitle.delete'),
     t('message.confirm'),
     t('message.delete'),
-    "warning"
+    "warning",
+    t('messageTitle.ok'),
+    t('messageTitle.cancel'),
   ).then((result) => {
     if (result) {
       fetchDeleteProduct(id)
@@ -116,31 +120,35 @@ const handleDeleteProduct = (id: number) => {
           productResponse.content.forEach((item, index) => {
             if (item.id === response.id) {
               productResponse.content.splice(index, 1);
+              customMessage('success' , t('message.delete'))
               return;
             }
           });
         })
         .catch((error) => {
-          console.log(error);
+          customMessage('error' , error.response.data.message)
         });
     }
   });
 };
 
-const handleUpdateProduct = (id:number) => {
+const handleUpdateProduct = async (id:number) => {
   if(id){
-   productResponse.content.forEach(item => {
-    if(item.id === id){
-      handleResponseToProductReqeust(item);
-      item.categoryResponses.forEach(o => {
+   await fetchDetailProduct(id).then((response) => {
+      handleResponseToProductReqeust(response);
+      if(response.categoryResponses !== null){
+        response.categoryResponses.forEach((o:any) => {
           productRequest.categorys.push(o.id)
         })
-        props.addTabForm('update',ProductAdd , {
+      }
+        props.addTabForm('updateProduct',ProductAdd , {
           productRequest:productRequest,
           active:'update',
           idUpdate:id
         })
-    }
+     
+   }).catch((error)=>{
+    customMessage('error' , error.response.data.message)
    })
   }
 }
@@ -150,26 +158,26 @@ const handleDetailProduct = (id:number) => {
   fetchDetailProduct(id).then((response) => {
   
    handleResponseToProductReqeust(response);
-
-    response.categoryResponses.forEach((item:any) => {
+   if(response.categoryResponses !== null){
+   response.categoryResponses.forEach((item:any) => {
       productRequest.categorys.push(item.id)
     })
-    
-    props.addTabForm("detail" , ProductAdd , {
+   }
+    props.addTabForm("detailProduct" , ProductAdd , {
       productRequest:productRequest,
       active:'detail',
       productDetail:response
     })
     
   }).catch((error) => {
-    console.log(error);
+    customMessage('error' , error.response.data.message)
   })
 
  }
 }
 
 const handleDialog = () => {
-  props.addTabForm('create', ProductAdd ,{active:'create'});
+  props.addTabForm('createProduct', ProductAdd ,{active:'create'});
 }
 
 const handleResponseToProductReqeust = (response:ProductRequest) => {
@@ -191,8 +199,7 @@ const handleResponseToProductReqeust = (response:ProductRequest) => {
 
 const downloadExcel = async () => {
   try {
-    const response = await fetchExportExeclProduct();
-    
+    const response = await fetchExportExeclProduct(productFilter).then((response) => {
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
     link.href = url;
@@ -207,9 +214,18 @@ const downloadExcel = async () => {
 
     // Giải phóng URL đã tạo
     window.URL.revokeObjectURL(url);
+    });
    } catch (error) {
-    console.error('Error downloading Excel:', error);
-  }
+    if (error instanceof AxiosError) {
+      // Xử lý lỗi từ axios
+      if (error.response) {
+        const errorMessage = await error.response.data.text();
+        const jsonObject = JSON.parse(errorMessage); 
+        customMessage('error', jsonObject.message);
+
+      } 
+    } 
+   }
 };
 
 onMounted(() => {
@@ -242,7 +258,7 @@ onUnmounted(() => {
           </el-button>
          </div>
          <div>
-          <el-button @click="downloadExcel" type="primary">{{ t('downloadExcel') }}</el-button>
+          <el-button @click="downloadExcel" :disabled="productResponse.totalElements === 0" type="primary">{{ t('downloadExcel') }}</el-button>
 
          </div>
         </div>

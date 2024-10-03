@@ -3,8 +3,8 @@ import type { AxiosInstance } from 'axios';
 
 
 const axiosInstance: AxiosInstance = axios.create({
-    baseURL: 'http://192.168.1.40:8081/api', // Thay đổi URL này với URL API của bạn
-    // baseURL: 'http://localhost:8081/api', // Thay đổi URL này với URL API của bạn
+    // baseURL: 'http://192.168.1.27:8081/api', // Thay đổi URL này với URL API của bạn
+    baseURL: 'http://localhost:8081/api', // Thay đổi URL này với URL API của bạn
 
     timeout: 10000, // Thay đổi thời gian timeout nếu cần
     headers: {

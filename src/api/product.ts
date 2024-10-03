@@ -62,8 +62,11 @@ export async function fetchDetailProduct(id: number) {
 }
 
 
-export async function fetchExportExeclProduct() {
+export async function fetchExportExeclProduct(data: ProductFilter) {
     const response = await axiosInstance.get('/product/export', {
+        params: {
+            ...data
+        },
         responseType: 'blob', // Đặt responseType thành blob để nhận tệp
     });
     return response;

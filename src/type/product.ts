@@ -23,6 +23,7 @@ export interface ProductReqeust extends BaseProps {
     quantity: number | string,
     image: string,
     file: any | string,
+    removeImage?: boolean,
     categorys: number[]
 }
 

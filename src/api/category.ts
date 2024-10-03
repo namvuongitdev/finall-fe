@@ -60,8 +60,11 @@ export async function fetchUpdateCategory(id: number, data: FormData) {
     return response.data
 }
 
-export async function fetchExportExeclCtegory() {
+export async function fetchExportExeclCtegory(data: CateforyFilter) {
     const response = await axiosInstance.get('/category/export', {
+        params: {
+            ...data
+        },
         responseType: 'blob', // Đặt responseType thành blob để nhận tệp
     });
     return response;

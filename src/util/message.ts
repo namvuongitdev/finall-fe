@@ -1,18 +1,18 @@
 import { ElMessageBox, ElMessage } from 'element-plus';
 
 
-export function customConfirm(title: string, messageConfirm: string, messageSuccse: string, type: 'success' | 'warning' | 'info' | 'error' = 'warning'): Promise<boolean> {
+
+export function customConfirm(title: string, messageConfirm: string, messageSuccse: string,
+    type: 'success' | 'warning' | 'info' | 'error' = 'warning',
+    ok: string, cancel: string
+): Promise<boolean> {
     return new Promise((resolve, reject) => {
         ElMessageBox.confirm(messageConfirm, title, {
-            confirmButtonText: 'Ok',
-            cancelButtonText: 'Cancel',
+            confirmButtonText: ok,
+            cancelButtonText: cancel,
             type: type,
         })
             .then(() => {
-                ElMessage({
-                    type: 'success',
-                    message: messageSuccse,
-                })
                 resolve(true);
             })
             .catch(() => {

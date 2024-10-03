@@ -21,6 +21,9 @@ export const isTrim = (data: Record<string, any>) => {
 }
 
 export const trimInput = (field: keyof any, request: any) => {
+    if (field === 'productCode' || field === 'categoryCode') {
+        request[field] = request[field].replace(/\s+/g, '');
+    }
     if (request[field]) {
         request[field] = request[field].trim();
     }

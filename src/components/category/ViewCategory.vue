@@ -27,14 +27,12 @@ import ViewForm from "./ViewForm.vue";
 import { Plus, Delete, View, Edit } from "@element-plus/icons-vue";
 import eventBus from "@/eventbus/eventBus";
 import { ProductReqeust, ProductResponse } from "@/type/product";
-import en from "element-plus/es/locale/lang/en"; // Import ngôn ngữ tiếng Anh
-import vi from "element-plus/es/locale/lang/vi";
 import { useI18n } from "vue-i18n";
 import { URL_IMAGE } from "@/config/config";
+import { AxiosError } from "axios";
 
 const { t } = useI18n();
 
-const currentLanguage = ref(localStorage.getItem("language") || "en");
 
 const categoryResponse = reactive<Page<CategoryResponse>>({
   content: [],
@@ -63,7 +61,7 @@ const loadData = async () => {
       Object.assign(categoryResponse, response);
     })
     .catch((error) => {
-      customMessage('error' ,error.response.message)
+      customMessage("error", error.response.message);
     });
 };
 
@@ -104,7 +102,7 @@ const handleFilterCategory = (data: CategoryResponse) => {
   Object.assign(categoryResponse, data);
 };
 
-const handleDataRootFilter = (data: CategoryResponse) => {
+const handleDataRootFilter = (data: CateforyFilter) => {
   Object.assign(categoryFilter, data);
 };
 
@@ -113,7 +111,9 @@ const handleDeleteCategory = (id: number) => {
     t("messageTitle.delete"),
     t("message.confirm"),
     t("message.delete"),
-    "warning"
+    "warning",
+    t('messageTitle.ok'),
+    t('messageTitle.cancel'),
   ).then((result) => {
     if (result) {
       fetchDeleteCategory(id)
@@ -121,50 +121,51 @@ const handleDeleteCategory = (id: number) => {
           categoryResponse.content.forEach((item, index) => {
             if (item.id === response.id) {
               categoryResponse.content.splice(index, 1);
+              customMessage("success", t("message.delete"));
               return;
             }
           });
         })
         .catch((error) => {
-          console.log(error);
+          customMessage("error", error.response.data.message);
         });
     }
   });
 };
 
 const handleAddCategory = () => {
-  props.addTabForm("create", ViewForm, { active: "create" });
+  props.addTabForm("createCategory", ViewForm, { active: "create" });
 };
 
 const handleDetailCategory = (id: number) => {
   fetchDetailCategory(id)
     .then((response) => {
       console.log(response);
-      props.addTabForm("detail", ViewForm, {
+      props.addTabForm("detailCategory", ViewForm, {
         active: "detail",
         categoryDetail: response,
       });
     })
     .catch((error) => {
-      console.log(error);
+      customMessage('error' , error.response.data.message)
     });
 };
 
 const sendToFormToUpdate = (id: number) => {
-  categoryResponse.content.forEach((element) => {
-    if (id === element.id) {
-      props.addTabForm("update", ViewForm, {
-        categoryDetail: element,
+  fetchDetailCategory(id).then((response) => {
+    props.addTabForm("updateCategory", ViewForm, {
+        categoryDetail: response,
         active: "update",
         idUpdate: id,
       });
-    }
-  });
+    }).catch((error) => {
+      customMessage('error' , error.response.data.message)
+    })
 };
 
 const handleExeclCategory = async () => {
   try {
-    const response = await fetchExportExeclCtegory();
+    const response = await fetchExportExeclCtegory(categoryFilter);
 
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement("a");
@@ -181,7 +182,14 @@ const handleExeclCategory = async () => {
     // Giải phóng URL đã tạo
     window.URL.revokeObjectURL(url);
   } catch (error) {
-    console.error("Error downloading Excel:", error);
+    if (error instanceof AxiosError) {
+      // Xử lý lỗi từ axios
+      if (error.response) {
+        const errorMessage = await error.response.data.text();
+        const jsonObject = JSON.parse(errorMessage);
+        customMessage("error", jsonObject.message);
+      }
+    }
   }
 };
 
@@ -193,25 +201,10 @@ onUnmounted(() => {
   eventBus.off("loadData", loadData);
 });
 
-const updateLanguage = (newLang: string) => {
-  currentLanguage.value = newLang;
-};
-
-onMounted(() => {
-  eventBus.on("languageChanged", updateLanguage);
-});
-
-onBeforeUnmount(() => {
-  eventBus.off("languageChanged", updateLanguage);
-});
-
-const locale = computed(() => {
-  return currentLanguage.value === "vi" ? vi : en;
-});
 </script>
 
 <template>
-  <el-config-provider :locale="locale">
+  <!-- <el-config-provider :locale="locale"> -->
     <div class="container">
       <div class="filterCategory">
         <FormFilterCategory
@@ -224,9 +217,12 @@ const locale = computed(() => {
           <Plus />
           {{ t("create") }}</el-button
         >
-        <el-button type="primary" @click="handleExeclCategory">{{
-          t("downloadExcel")
-        }}</el-button>
+        <el-button
+          type="primary"
+          :disabled="categoryResponse.totalElements === 0"
+          @click="handleExeclCategory"
+          >{{ t("downloadExcel") }}</el-button
+        >
       </div>
       <el-table
         max-height="500"
@@ -243,7 +239,7 @@ const locale = computed(() => {
         <el-table-column
           prop="categoryCode"
           :label="t('tableCategory.categoryCode')"
-          width="180"
+          width="120"
         />
         <el-table-column
           prop="categoryName"
@@ -260,19 +256,20 @@ const locale = computed(() => {
           :label="t('tableCategory.modifiedDate')"
         />
 
-        <el-table-column prop="image" :label="t('tableCategory.image')">
+        <el-table-column prop="image" :label="t('tableCategory.image')" width="100">
           <template v-slot="{ row }">
             <img
               alt="Image"
               style="width: 80px; height: 50px"
-              :src="URL_IMAGE + row.image"
+              :src="row.image"
+              v-if="row.image"
             />
           </template>
         </el-table-column>
         <el-table-column prop="status" :label="t('tableCategory.status')">
           <template v-slot="{ row }">
             <el-tag effect="success">
-              {{ row.status }}
+              {{ t(`tableCategory.${row.status}`) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -280,18 +277,42 @@ const locale = computed(() => {
         <el-table-column
           fixed="right"
           :label="t('tableCategory.operations')"
-          min-width="220"
+          min-width="180"
         >
           <template v-slot="{ row }">
-            <el-icon @click="handleDetailCategory(row.id)" class="icon">
-              <View />
-            </el-icon>
-            <el-icon @click="sendToFormToUpdate(row.id)" class="icon">
-              <Edit />
-            </el-icon>
-            <el-icon @click="handleDeleteCategory(row.id)" class="icon">
-              <Delete />
-            </el-icon>
+            <el-tooltip
+              class="box-item"
+              effect="dark"
+              :content="t('tabs.detail')"
+              placement="top"
+            >
+              <el-icon @click="handleDetailCategory(row.id)" class="icon">
+                <View />
+              </el-icon>
+            </el-tooltip>
+
+            <el-tooltip
+              class="box-item"
+              effect="dark"
+              :content="t('tabs.update')"
+              placement="top"
+            >
+              <el-icon @click="sendToFormToUpdate(row.id)" class="icon">
+                <Edit />
+              </el-icon>
+            </el-tooltip>
+
+            <el-tooltip
+              class="box-item"
+              effect="dark"
+              :content="t('tabs.delete')"
+              placement="top"
+            >
+              <el-icon @click="handleDeleteCategory(row.id)" class="icon">
+                <Delete />
+              </el-icon>
+            </el-tooltip>
+
           </template>
         </el-table-column>
       </el-table>
@@ -313,7 +334,7 @@ const locale = computed(() => {
         />
       </div>
     </div>
-  </el-config-provider>
+  <!-- </el-config-provider> -->
 </template>
 
 

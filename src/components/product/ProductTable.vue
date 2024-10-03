@@ -12,33 +12,13 @@ import {
   watch,
 } from "vue";
 import { Plus, Delete, View } from "@element-plus/icons-vue";
-import en from "element-plus/es/locale/lang/en"; 
-import vi from "element-plus/es/locale/lang/vi";
 import { inject } from "vue";
 import { useI18n } from "vue-i18n";
-import eventBus from "@/eventbus/eventBus";
 import { URL_IMAGE } from "@/config/config";
 
 const { t } = useI18n();
 const size = ref<number>();
 const pageNew = ref<number>();
-const currentLanguage = ref(localStorage.getItem("language") || "en");
-
-const updateLanguage = (newLang: string) => {
-  currentLanguage.value = newLang;
-};
-
-onMounted(() => {
-  eventBus.on("languageChanged", updateLanguage);
-});
-
-onBeforeUnmount(() => {
-  eventBus.off("languageChanged", updateLanguage);
-});
-
-const locale = computed(() => {
-  return currentLanguage.value === "vi" ? vi : en;
-});
 
 const prop = defineProps<{
   items: Page<ProductResponse>;
@@ -82,7 +62,6 @@ const sendDataDetail = (id: number) => {
 </script>
 
 <template>
-  <el-config-provider :locale="locale">
     <div class="table">
       <el-table :data="prop.items.content" max-height="500" border>
         <el-table-column fixed label="STT">
@@ -93,7 +72,7 @@ const sendDataDetail = (id: number) => {
         <el-table-column
           prop="productCode"
           :label="t('table.productCode')"
-          width="180"
+          width="100"
         />
         <el-table-column
           prop="productName"
@@ -105,20 +84,21 @@ const sendDataDetail = (id: number) => {
         <el-table-column prop="quantity" :label="t('table.quantity')" />
         <el-table-column prop="createAt" :label="t('table.createAt')" />
         <el-table-column prop="modifiedDate" :label="t('table.modifiedDate')" />
-        <el-table-column prop="image" :label="t('table.image')">
+        <el-table-column prop="image" :label="t('table.image')"  width="100">
           <template v-slot="{ row }">
             <img
               alt="Image"
               style="width: 80px; height: 50px"
-              :src="URL_IMAGE + row.image"
+              :src="row.image"
+              v-if="row.image"
             />
           </template>
         </el-table-column>
-        <el-table-column prop="categorys" :label="t('table.category')" />
-        <el-table-column prop="status" :label="t('table.status')">
+        <el-table-column prop="categorys" :label="t('table.category')"  width="180"/>
+        <el-table-column prop="status" :label="t('table.status')" width="120" >
           <template v-slot="{ row }">
             <el-tag effect="success">
-              {{ row.status }}
+              {{ t(`table.${row.status}`) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -126,19 +106,43 @@ const sendDataDetail = (id: number) => {
         <el-table-column
           fixed="right"
           :label="t('table.operations')"
-          min-width="220"
+          width="180"
         >
           <template v-slot="{ row }">
             <div style="display: flex; align-items: center">
-              <el-icon @click="sendDataDetail(row.id)" class="icon">
-                <View />
-              </el-icon>
-              <el-icon @click="sendDataToUpdate(row.id)" class="icon">
-                <Edit />
-              </el-icon>
-              <el-icon @click="sendDataToDelete(row.id)" class="icon">
-                <Delete />
-              </el-icon>
+              <el-tooltip
+                class="box-item"
+                effect="dark"
+                :content="t('tabs.detail')"
+                placement="top"
+              >
+                <el-icon @click="sendDataDetail(row.id)" class="icon">
+                  <View />
+                </el-icon>
+              </el-tooltip>
+              
+              <el-tooltip
+                class="box-item"
+                effect="dark"
+                :content="t('tabs.update')"
+                placement="top"
+              >
+                <el-icon @click="sendDataToUpdate(row.id)" class="icon">
+                  <Edit />
+                </el-icon>
+              </el-tooltip>
+
+              <el-tooltip
+                class="box-item"
+                effect="dark"
+                :content="t('tabs.delete')"
+                placement="top"
+              >
+                <el-icon @click="sendDataToDelete(row.id)" class="icon">
+                  <Delete />
+                </el-icon>
+              </el-tooltip>
+
             </div>
           </template>
         </el-table-column>
@@ -159,7 +163,6 @@ const sendDataDetail = (id: number) => {
         :goto-text="t('pagination.goto')"
       />
     </div>
-  </el-config-provider>
 </template>
 
 
@@ -176,15 +179,11 @@ const sendDataDetail = (id: number) => {
 .icon {
   margin-left: 5px;
   font-size: 20px;
-  /* Kích thước biểu tượng */
   cursor: pointer;
-  /* Hiển thị con trỏ như clickable */
   color: #698dff;
   transition: color 0.3s, transform 0.3s;
-  /* Hiệu ứng chuyển màu và phóng to */
 }
 .icon:hover {
   transform: scale(1.1);
-  /* Phóng to khi hover */
 }
 </style>

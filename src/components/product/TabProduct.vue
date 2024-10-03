@@ -28,7 +28,7 @@ const addTabForm = (tabTitle: string, component: any = null , props: Record<stri
 
 const editableTabs = ref<Tab[]>([
   {
-    title: "manage",
+    title: "manageProduct",
     name: "1",
     component: markRaw(ProductForm),
     props: {
@@ -71,7 +71,7 @@ const resetTab = () => {
     <el-tab-pane
       v-for="item in editableTabs"
       :key="item.name"
-      :label="t(`tabs.${item.title}`)"
+      :label="t(`tabs.product.${item.title}`)"
        :name="item.name"
     >
       <component @reset-tab="resetTab" :is="item.component" v-bind="item.props" />

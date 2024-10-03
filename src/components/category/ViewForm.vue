@@ -4,7 +4,7 @@ import { createFormData } from "@/api/formdata";
 import { CategoryRequest, CategoryResponse } from "@/type/category";
 import { customMessage } from "@/util/message";
 import { type FormInstance } from "element-plus";
-import { reactive, ref, defineProps, defineExpose, defineEmits } from "vue";
+import { reactive, ref, defineProps, defineExpose, defineEmits  , computed} from "vue";
 import { useI18n } from "vue-i18n";
 import eventBus from "@/eventbus/eventBus";
 import { trimInput } from "@/util/isAllEmpty";
@@ -24,26 +24,25 @@ const categoryRequest = reactive<CategoryRequest>({
   createBy: "",
   modifiedBy: "",
   modifiedDate: "",
+  removeImage:false,
   file: "",
 });
 
-const validateSpecialCharPattern = (
+const validateSpecialChar = (
   rule: any,
   value: string,
   callback: (error?: Error) => void
 ) => {
-  const specialChars = '!@#$%^&*(),.?":{}|<>';
-  if (
-    typeof value === "string" &&
-    specialChars.split("").some((char) => value.includes(char))
-  ) {
-    callback(new Error(t("validation.specialChar")));
+  const regex = /[!@#$%^&*(),.?":{}|<>]/;
+  if (regex.test(value)) {
+    return callback(new Error(t("validation.specialChar")));
   } else {
     callback();
+
   }
 };
 
-const rules = {
+const rules = computed (() => ({
   categoryCode: [
     { required: true, message: t("validation.required"), trigger: "blur" },
     {
@@ -52,38 +51,31 @@ const rules = {
       message: t("validation.minLength", { min: 3, max: 50 }),
       trigger: "blur",
     },
-    {
-      validator: validateSpecialCharPattern,
-      trigger: "blur",
-    },
+    {validator:validateSpecialChar}
   ],
   categoryName: [
     { required: true, message: t("validation.required") },
     {
       min: 3,
-      max: 50,
-      message: t("validation.minLength", { min: 3, max: 50 }),
+      max: 250,
+      message: t("validation.minLength", { min: 3, max: 250 }),
       trigger: "blur",
     },
-    {
-      validator: validateSpecialCharPattern,
-      trigger: "blur",
-    },
+    {validator:validateSpecialChar}
+
   ],
   description: [
     { required: true, message: t("validation.required") },
     {
       min: 3,
-      max: 50,
-      message: t("validation.minLength", { min: 3, max: 50 }),
+      max: 250,
+      message: t("validation.minLength", { min: 3, max: 250 }),
       trigger: "blur",
     },
-    {
-      validator: validateSpecialCharPattern,
-      trigger: "blur",
-    },
+    {validator:validateSpecialChar}
+
   ],
-};
+}));
 
 const props = defineProps<{
   active: string;
@@ -128,7 +120,9 @@ const handleChange = (file: { raw: File }): void => {
 };
 
 const removeImage = () => {
-  (categoryRequest.image = ""), (categoryRequest.file = null);
+  categoryRequest.image = "",
+   categoryRequest.file = null;
+   categoryRequest.removeImage = true;
 };
 
 const handleCreateCategory = (formEl: FormInstance | undefined) => {
@@ -140,7 +134,7 @@ const handleCreateCategory = (formEl: FormInstance | undefined) => {
       if (props.active === "update" && props.idUpdate) {
         fetchUpdateCategory(props.idUpdate, formData)
           .then((response) => {
-            customMessage("success", "update success");
+            customMessage("success", t('message.update'));
             eventBus.emit("loadData", response);
           })
           .catch((error) => {
@@ -149,7 +143,7 @@ const handleCreateCategory = (formEl: FormInstance | undefined) => {
       } else if (props.active === "create") {
         fetchAddCategory(formData)
           .then((response) => {
-            customMessage("success", "create success");
+            customMessage("success",t('message.create'));
             eventBus.emit("loadData", response);
           })
           .catch((error) => {
@@ -186,7 +180,7 @@ const resetTab = () => {
             :src="
               isCheckImage
                 ? categoryRequest.image
-                : URL_IMAGE + categoryRequest.image
+                : categoryRequest.image
             "
             alt=""
             class="avatar"
@@ -204,7 +198,7 @@ const resetTab = () => {
       <div v-else-if="props.active === 'detail'" class="upload-container">
         <img
           v-if="categoryRequest.image"
-          :src="URL_IMAGE + categoryRequest.image"
+          :src="categoryRequest.image"
           alt=""
           class="avatar"
         />
@@ -320,7 +314,7 @@ const resetTab = () => {
             <el-button @click="resetTab">{{ t("back") }}</el-button>
             <el-button
               @click="handleCreateCategory(formRef)"
-              :disabled="props.active === 'detail'"
+              v-if="props.active === 'create' || props.active === 'update'"
               type="primary"
               >{{ t("save") }}</el-button
             >
@@ -332,16 +326,21 @@ const resetTab = () => {
 </template>
 
 <style scoped>
+.text{
+  margin-left: 100px;
+}
 .text p {
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: normal;
   width: 300px;
   color: rgba(151, 151, 151, 0.9);
+  text-align: left;
 }
 .container {
   display: flex;
   margin-left: 50px;
+  margin-top:30px ;
   overflow: hidden;
 }
 

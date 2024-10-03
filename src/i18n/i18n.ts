@@ -18,7 +18,9 @@ const messages = {
             Category: "Category",
             operations: 'Operations',
             createBy: 'Create by',
-            modifiedBy: 'Modified By'
+            modifiedBy: 'Modified By',
+            ACTIVE: 'ACTIVE'
+
         },
         tableCategory: {
             index: 'No.',
@@ -32,7 +34,9 @@ const messages = {
             Category: "Category",
             operations: 'Operations',
             createBy: 'Create by',
-            modifiedBy: 'Modified By'
+            modifiedBy: 'Modified By',
+            ACTIVE: 'ACTIVE'
+
         },
         pagination: {
             itemsPerPage: 'Items per page',
@@ -40,13 +44,27 @@ const messages = {
             goto: 'Go to', // Chuỗi cho "Go to"
         },
         tabs: {
-            create: 'create',
-            detail: 'detail',
-            update: 'update',
-            manage: 'manage',
+            create: 'Create',
+            detail: 'Detail',
+            update: 'Update',
+            delete: 'Delete',
+            product: {
+                createProduct: 'Create product',
+                detailProduct: 'Detail product',
+                updateProduct: 'Update product',
+                manageProduct: 'Manage product',
+            },
+            category: {
+                createCategory: 'Create category',
+                detailCategory: 'Detail category',
+                updateCategory: 'Update category',
+                manageCategory: 'Manage category',
+            }
+
         },
         validation: {
             required: 'This field is required.',
+            code: 'This field must have at least {min} characters {max} characters',
             minLength: 'This field must have at least {min} characters {max} characters',
             number: 'This field must be a number.',
             priceInvalid: 'Price must be a positive number.',
@@ -55,11 +73,17 @@ const messages = {
             intergerValid: 'must be a number',
             image: 'Please select image file!',
             imageMaxSizeInMB: 'File size must be less than or equal to {maxSizeInMB} MB!',
-            specialChar: 'No special characters allowed'
+            specialChar: 'No special characters allowed',
+            lengSearch: "max must{max}",
+            max: 'minimum value {max}',
+            positiveNumberError: 'price must be greater than 0'
 
         },
         messageTitle: {
-            delete: 'delete'
+            delete: 'Confirm delete',
+            ok: 'Ok',
+            cancel: 'Cancel'
+
         },
         message: {
             delete: 'detele success',
@@ -104,6 +128,8 @@ const messages = {
             operations: 'Thao tác',
             createBy: 'Người tạo',
             modifiedBy: 'Người sửa',
+            ACTIVE: 'Đang hoạt động'
+
         },
         tableCategory: {
             index: 'No.',
@@ -116,7 +142,8 @@ const messages = {
             image: "Anh",
             operations: 'Thao tác',
             createBy: 'Người tạo',
-            modifiedBy: 'Người sửa'
+            modifiedBy: 'Người sửa',
+            ACTIVE: 'Đang hoạt động'
         },
         pagination: {
             itemsPerPage: 'Số mục mỗi trang',
@@ -125,13 +152,29 @@ const messages = {
         },
         tabs: {
             create: 'Thêm mới',
-            detail: 'chi tiết',
-            update: 'cập nhập',
-            manage: 'Quản lý'
+            detail: 'Chi tiết',
+            update: 'Cập nhập',
+            delete: 'Xóa',
+            product: {
+                createProduct: 'Thêm mới sản phẩm',
+                detailProduct: 'Chi tiết sản phẩm',
+                updateProduct: 'Cập nhập sản phẩm',
+                manageProduct: 'Quản lý sản phẩm',
+                delete: 'Xóa',
+            },
+            category: {
+                createCategory: 'Thêm mới danh mục',
+                detailCategory: 'Chi tiết danh mục',
+                updateCategory: 'Cập nhập danh mục',
+                manageCategory: 'Quản lý danh mục',
+                delete: 'Xóa',
+            }
+
         },
         validation: {
             required: 'Trường này là bắt buộc.',
             minLength: 'Trường này phải có ít nhất {min} ký tự và {max} ký tự',
+            code: 'Trường này phải có ít nhất {min} ký tự và {max} ký tự',
             number: 'Trường này phải là số.',
             priceInvalid: 'Giá phải là số dương.',
             quantityInvalid: 'Số lượng phải là số nguyên dương.',
@@ -139,10 +182,16 @@ const messages = {
             intergerValid: 'phải là số nguyên',
             image: 'Vui lòng chọn file hình ảnh!',
             imageMaxSizeInMB: 'Kích thước file phải nhỏ hơn hoặc bằng {maxSizeInMB} MB!',
-            specialChar: 'không được nhập tí tự đặc biệt'
+            specialChar: 'không được nhập tí tự đặc biệt',
+            lengSearch: "Tối đa chỉ được {max}",
+            maxPrice: 'Gía không được lơn hơn 2.000.000.000',
+            max: 'Gía trị tối thiểu {max}',
+
         },
         messageTitle: {
-            delete: 'xóa'
+            delete: 'Xác nhận xóa',
+            ok: 'Chấp nhận',
+            cancel: 'Hủy'
         },
         message: {
             delete: 'xóa thành công',

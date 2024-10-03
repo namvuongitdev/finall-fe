@@ -19,7 +19,6 @@ const { t } = useI18n();
 const formRef = ref<FormInstance>();
 const isCheckImage = ref<boolean>(false);
 const category = reactive<CategoryResponse[]>([]);
-const categoryLoadName = reactive<string[]>([]);
 const emit = defineEmits(["reset-tab"]);
 
 const productRequest = reactive<ProductReqeust>({
@@ -34,16 +33,20 @@ const productRequest = reactive<ProductReqeust>({
   createBy: "",
   modifiedBy: "",
   modifiedDate: "",
+  removeImage: false,
   categorys: [],
 });
 
-const validatePriceAndQuantity = (
+const validatePrice = (
   rule: any,
   value: number,
   callback: (error?: Error) => void
 ) => {
-  if (value < 0) {
+  if (value <= 0) {
     return callback(new Error(t("validation.positiveNumberError")));
+  }
+  if (value > 2000000000) {
+    return callback(new Error(t("validation.max", { max: "2.000.000.000" })));
   }
   if (!Number.isInteger(Number(value))) {
     return callback(new Error(t("validation.intergerValid")));
@@ -51,52 +54,82 @@ const validatePriceAndQuantity = (
   callback();
 };
 
-const rules = {
+const validateSpecialChar = (
+  rule: any,
+  value: string,
+  callback: (error?: Error) => void
+) => {
+  const regex = /[!@#$%^&*(),.?":{}|<>]/;
+  if (regex.test(value)) {
+    return callback(new Error(t("validation.specialChar")));
+  } else {
+    callback();
+
+  }
+};
+
+const validateQuantity = (
+  rule: any,
+  value: number,
+  callback: (error?: Error) => void
+) => {
+  if (value <= 0) {
+    return callback(new Error(t("validation.positiveNumberError")));
+  }
+  if (value > 2000000) {
+    return callback(new Error(t("validation.max", { max: "2.000.000" })));
+  }
+
+  if (!Number.isInteger(Number(value))) {
+    return callback(new Error(t("validation.intergerValid")));
+  }
+
+  callback();
+};
+
+const rules = computed(() => ({
   productCode: [
-    { required: true, message: t("validation.required") },
+    { required: true, message: t("validation.required")},
     {
       min: 3,
       max: 50,
       message: t("validation.minLength", { min: 3, max: 50 }),
-      trigger: "blur",
     },
+    {validator:validateSpecialChar}
   ],
   productName: [
     { required: true, message: t("validation.required") },
     {
       min: 3,
-      max: 50,
-      message: t("validation.minLength", { min: 3, max: 50 }),
+      max: 250,
+      message: t("validation.minLength", { min: 3, max: 250 }),
       trigger: "blur",
     },
+    {validator:validateSpecialChar}
+
   ],
   description: [
     { required: true, message: t("validation.required") },
     {
       min: 3,
-      max: 50,
-      message: t("validation.minLength", { min: 3, max: 50 }),
+      max: 250,
+      message: t("validation.minLength", { min: 3, max: 250 }),
       trigger: "blur",
     },
+    {validator:validateSpecialChar}
+
   ],
   price: [
-    { required: true, message: t("validation.required"), trigger: "blur" },
-    { type: "number", message: t("validation.number"), trigger: "blur" },
-    { validator: validatePriceAndQuantity, trigger: "blur" },
+    { required: true, message: t("validation.required") },
+    { type: "number", message: t("validation.number") },
+    { validator: validatePrice },
   ],
   quantity: [
-    { required: true, message: t("validation.required"), trigger: "blur" },
-    { type: "number", message: t("validation.number"), trigger: "blur" },
-    { validator: validatePriceAndQuantity, trigger: "blur" },
+    { required: true, message: t("validation.required") },
+    { type: "number", message: t("validation.number") },
+    { validator: validateQuantity },
   ],
-  categorys: [
-    { required: true, message: t("validation.required"), trigger: "change" },
-    { required: true, message: t("validation.required"), trigger: "blur" },
-  ],
-  Image: [
-    { required: true, message: t("validation.required"), trigger: "blur" },
-  ],
-};
+}));
 
 const props = defineProps<{
   productRequest?: ProductReqeust;
@@ -105,7 +138,7 @@ const props = defineProps<{
 }>();
 
 Object.assign(productRequest, props.productRequest);
-console.log(productRequest);
+console.log(productRequest.categorys);
 
 const handleCategory = async () => {
   const response = await fetchCategorys();
@@ -190,6 +223,7 @@ const handleChange = (file: { raw: File }): void => {
 const removeImage = () => {
   productRequest.file = null;
   productRequest.image = "";
+  productRequest.removeImage = true;
 };
 
 const selectedCategoryNames = computed(() => {
@@ -215,11 +249,7 @@ const selectedCategoryNames = computed(() => {
         >
           <img
             v-if="productRequest.image"
-            :src="
-              isCheckImage
-                ? productRequest.image
-                : URL_IMAGE + productRequest.image
-            "
+            :src="isCheckImage ? productRequest.image : productRequest.image"
             alt=""
             class="avatar"
           />
@@ -230,13 +260,13 @@ const selectedCategoryNames = computed(() => {
           @click="removeImage"
           class="remove-button"
         >
-         {{ t('deleteImage') }}
+          {{ t("deleteImage") }}
         </el-button>
       </div>
       <div v-else-if="props.active === 'detail'" class="upload-container">
         <img
           v-if="productRequest.image"
-          :src="URL_IMAGE + productRequest.image"
+          :src="productRequest.image"
           alt=""
           class="avatar"
         />
@@ -296,7 +326,6 @@ const selectedCategoryNames = computed(() => {
           <el-form-item prop="price" :label="t('table.price')">
             <el-input
               :disabled="props.active === 'detail'"
-              type="number"
               v-model.number="productRequest.price"
               @blur="trimInput('price', productRequest)"
             />
@@ -305,7 +334,6 @@ const selectedCategoryNames = computed(() => {
           <el-form-item prop="quantity" :label="t('table.quantity')">
             <el-input
               :disabled="props.active === 'detail'"
-              type="number"
               v-model.number="productRequest.quantity"
               @blur="trimInput('quantity', productRequest)"
             />
@@ -346,7 +374,7 @@ const selectedCategoryNames = computed(() => {
           </el-form-item>
         </div>
 
-        <el-form-item prop="categorys" :label="t('table.category')">
+        <el-form-item :label="t('table.category')">
           <el-select
             v-model="productRequest.categorys"
             multiple
@@ -367,7 +395,7 @@ const selectedCategoryNames = computed(() => {
             <el-button @click="resetTab">{{ t("back") }}</el-button>
             <el-button
               type="primary"
-              :disabled="props.active === 'detail'"
+              v-if="props.active === 'create' || props.active === 'update'"
               @click="handleCreateProduct(formRef)"
               >{{ t("save") }}</el-button
             >
@@ -379,100 +407,105 @@ const selectedCategoryNames = computed(() => {
 </template>
 
 <style scoped>
+.text {
+  margin-left: 100px;
+}
+
 .text p {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    white-space: normal;
-    width: 300px;
-    color: rgba(151, 151, 151, 0.9);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  width: 300px;
+  color: rgba(151, 151, 151, 0.9);
+  text-align: left;
 }
 
 .container {
-    display: flex;
-    margin-left: 50px;
-    overflow: hidden;
+  display: flex;
+  margin-left: 50px;
+  margin-top: 30px;
+  overflow: hidden;
 }
 
 .form-container {
-    flex: 1;
-    padding-left: 20px;
-    background-color: #fff;
-    border-radius: 5px;
-    padding: 20px 50px;
-    margin-right: 20px;
+  flex: 1;
+  padding-left: 20px;
+  background-color: #fff;
+  border-radius: 5px;
+  padding: 20px 50px;
+  margin-right: 20px;
 }
 
 .image-container {
-    background-color: #fff;
-    height: 100%;
-    padding: 20px 50px;
-    margin-right: 30px;
-    border-radius: 5px;
-    text-align: center;
+  background-color: #fff;
+  height: 100%;
+  padding: 20px 50px;
+  margin-right: 30px;
+  border-radius: 5px;
 }
 
 .upload-container:hover {
-    border-color: #66afe9;
+  border-color: #66afe9;
 }
 
 .upload-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .upload-icon {
-    font-size: 50px;
-    color: #007bff;
-    margin-bottom: 10px;
+  font-size: 50px;
+  color: #007bff;
+  margin-bottom: 10px;
 }
 
 .avatar-uploader {
-    position: relative;
-    width: 200px;
-    height: 200px;
-    border: 1px dashed #d9d9d9;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #f7f7f7;
-    cursor: pointer;
+  position: relative;
+  width: 200px;
+  height: 200px;
+  border: 1px dashed #d9d9d9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f7f7f7;
+  cursor: pointer;
 }
 
 .avatar {
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
 }
 
 .upload-icon {
-    font-size: 24px;
-    color: #a0a0a0;
+  font-size: 24px;
+  color: #a0a0a0;
 }
 
 .upload-icon:hover {
-    color: #1890ff;
+  color: #1890ff;
 }
 
 .remove-button {
-    margin-top: 10px;
-    background-color: #a0a0a0;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    cursor: pointer;
-    border-radius: 4px;
+  margin-top: 10px;
+  background-color: #a0a0a0;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 4px;
 }
 
 .remove-button:hover {
-    background-color: rgb(203, 198, 198);
+  background-color: rgb(203, 198, 198);
 }
 
 .dialog-footer {
-    display: flex;
-    justify-items: center;
-    justify-content: right;
+  display: flex;
+  justify-items: center;
+  justify-content: right;
 }
 </style>
